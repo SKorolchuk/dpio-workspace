@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/SKorolchuk/dpio-workspace/internal/pkg/infra/server"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // init function.
 	"go.opentelemetry.io/otel"
@@ -113,6 +115,69 @@ func NamedExecContext(ctx context.Context, logger *zap.SugaredLogger, connection
 
 	if _, err := connection.NamedExecContext(ctx, query, params); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// NamedQueryStruct is a helper to execute queries that return a single structured value.
+func NamedQueryStruct(ctx context.Context, logger *zap.SugaredLogger, connection *sqlx.DB, sqlQuery string,
+	params interface{}, target interface{}) error {
+	query, err := queryString(sqlQuery, params)
+	if err != nil {
+		return err
+	}
+	logger.Infow("database.NamedQueryStruct", "traceid", server.GetTraceID(ctx), "query", query)
+
+	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
+	span.SetAttributes(attribute.String("query", query))
+	defer span.End()
+
+	rows, err := connection.NamedQueryContext(ctx, query, params)
+	if err != nil {
+		return err
+	}
+	if !rows.Next() {
+		return ErrorNotFound
+	}
+
+	if err := rows.StructScan(target); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NamedQuerySlice is a helper to execute queries that return a collection of data.
+func NamedQuerySlice(ctx context.Context, logger *zap.SugaredLogger, connection *sqlx.DB, sqlQuery string,
+	params interface{}, target interface{}) error {
+	query, err := queryString(sqlQuery, params)
+	if err != nil {
+		return err
+	}
+	logger.Infow("database.NamedQuerySlice", "traceid", server.GetTraceID(ctx), "query", query)
+
+	ctx, span := otel.GetTracerProvider().Tracer("").Start(ctx, "database.query")
+	span.SetAttributes(attribute.String("query", query))
+	defer span.End()
+
+	value := reflect.ValueOf(target)
+	if value.Kind() != reflect.Ptr || value.Elem().Kind() != reflect.Slice {
+		return errors.New("target object should be a pointer to a slice")
+	}
+
+	rows, err := connection.NamedQueryContext(ctx, query, params)
+	if err != nil {
+		return err
+	}
+
+	sliceRef := value.Elem()
+	for rows.Next() {
+		sliceElement := reflect.New(sliceRef.Type().Elem())
+		if err := rows.StructScan(sliceElement.Interface()); err != nil {
+			return err
+		}
+		sliceRef.Set(reflect.Append(sliceRef, sliceElement.Elem()))
 	}
 
 	return nil

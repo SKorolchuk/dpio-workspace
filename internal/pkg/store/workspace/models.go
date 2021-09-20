@@ -22,11 +22,44 @@ type Workspace struct {
 	Name             string    `db:"name" json:"name"`
 	Description      string    `db:"description" json:"description"`
 	AssetAmountLimit int32     `db:"asset_amount_limit" json:"assetAmountLimit"`
-	MaxX             int32     `db:"x_max" json:"MaxX"`
-	MaxY             int32     `db:"y_max" json:"MaxY"`
-	MaxZ             int32     `db:"z_max" json:"MaxZ"`
+	MaxX             int32     `db:"x_max" json:"maxX"`
+	MaxY             int32     `db:"y_max" json:"maxY"`
+	MaxZ             int32     `db:"z_max" json:"maxZ"`
 	DateCreated      time.Time `db:"date_created" json:"dateCreated"`
 	CreatedByUser    string    `db:"created_by_user_id" json:"createdByUser"`
 	DateUpdated      time.Time `db:"date_updated" json:"dateUpdated"`
 	UpdatedByUser    string    `db:"updated_by_user_id" json:"updatedByUser"`
+}
+
+// NewWorkspace describes all data that should be specified during creation of new Workspace entity.
+type NewWorkspace struct {
+	ProjectID        string `json:"projectId" validate:"required"`
+	StemID           string `json:"stemId" validate:"required"`
+	Name             string `json:"name" validate:"required"`
+	Description      string `json:"description" validate:"-"`
+	AssetAmountLimit int32  `json:"assetAmountLimit" validate:"required,gte=1"`
+	MaxX             int32  `json:"maxX" validate:"required,gte=1"`
+	MaxY             int32  `json:"maxY" validate:"required,gte=1"`
+	MaxZ             int32  `json:"maxZ" validate:"required,gte=0"`
+}
+
+// UpdateWorkspace describes all data that can be changed during update of existing Workspace entity.
+type UpdateWorkspace struct {
+	Name             *string `json:"name" validate:"required"`
+	Description      *string `json:"description" validate:"-"`
+	AssetAmountLimit *int32  `json:"assetAmountLimit" validate:"required,gte=1"`
+	MaxX             *int32  `json:"maxX" validate:"required,gte=1"`
+	MaxY             *int32  `json:"maxY" validate:"required,gte=1"`
+	MaxZ             *int32  `json:"maxZ" validate:"required,gte=0"`
+}
+
+// Asset represents reference to dynamic element that should be displayed in Workspace area.
+type Asset struct {
+	ID          string `db:"asset_id" json:"id"`
+	WorkspaceID string `db:"workspace_id" json:"workspaceId"`
+	AssetRefID  string `db:"asset_external_ref_id" json:"assetRefId"`
+	X           int32  `db:"position_x" json:"x"`
+	Y           int32  `db:"position_y" json:"y"`
+	Z           int32  `db:"position_z" json:"z"`
+	W           int32  `db:"position_w" json:"w"`
 }
