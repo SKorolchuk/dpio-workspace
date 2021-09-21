@@ -10,7 +10,7 @@ const (
 
 // Stem represents specific type of Workspace entities.
 type Stem struct {
-	ID   string `db:"workspace_type_id" json:"id"`
+	ID   string `db:"stem_id" json:"id"`
 	Name string `db:"name" json:"name"`
 }
 
@@ -18,7 +18,7 @@ type Stem struct {
 type Workspace struct {
 	ID               string    `db:"workspace_id" json:"id"`
 	ProjectID        string    `db:"project_id" json:"projectId"`
-	StemID           string    `db:"workspace_type_id" json:"stemId"`
+	StemID           string    `db:"stem_id" json:"stemId"`
 	Name             string    `db:"name" json:"name"`
 	Description      string    `db:"description" json:"description"`
 	AssetAmountLimit int32     `db:"asset_amount_limit" json:"assetAmountLimit"`
@@ -55,11 +55,36 @@ type UpdateWorkspace struct {
 
 // Asset represents reference to dynamic element that should be displayed in Workspace area.
 type Asset struct {
-	ID          string `db:"asset_id" json:"id"`
-	WorkspaceID string `db:"workspace_id" json:"workspaceId"`
-	AssetRefID  string `db:"asset_external_ref_id" json:"assetRefId"`
-	X           int32  `db:"position_x" json:"x"`
-	Y           int32  `db:"position_y" json:"y"`
-	Z           int32  `db:"position_z" json:"z"`
-	W           int32  `db:"position_w" json:"w"`
+	ID            string    `db:"asset_id" json:"id"`
+	WorkspaceID   string    `db:"workspace_id" json:"workspaceId"`
+	AssetRefID    string    `db:"asset_external_ref_id" json:"assetRefId"`
+	X             int32     `db:"position_x" json:"x"`
+	Y             int32     `db:"position_y" json:"y"`
+	Z             int32     `db:"position_z" json:"z"`
+	Scale         int32     `db:"scale" json:"scale"`
+	Height        int32     `db:"height_by_y" json:"height"`
+	Width         int32     `db:"width_by_x" json:"width"`
+	Length        int32     `db:"length_by_z" json:"length"`
+	DateCreated   time.Time `db:"date_created" json:"dateCreated"`
+	CreatedByUser string    `db:"created_by_user_id" json:"createdByUser"`
+	DateUpdated   time.Time `db:"date_updated" json:"dateUpdated"`
+	UpdatedByUser string    `db:"updated_by_user_id" json:"updatedByUser"`
+}
+
+// NewAsset describes all data that should be specified during creation of new Asset entity.
+type NewAsset struct {
+	WorkspaceID string `json:"workspaceId" validate:"required"`
+	AssetRefID  string `json:"assetRefId" validate:"required"`
+	X           int32  `json:"x" validate:"required,gte=0"`
+	Y           int32  `json:"y" validate:"required,gte=0"`
+	Z           int32  `json:"z" validate:"required,gte=0"`
+	Scale       int32  `json:"scale" validate:"required,gte=0"`
+	Height      int32  `json:"height" validate:"required,gte=0"`
+	Width       int32  `json:"width" validate:"required,gte=0"`
+	Length      int32  `json:"length" validate:"required,gte=0"`
+}
+
+// UpdateAsset describes all data that can be changed during update of existing Asset entity.
+type UpdateAsset struct {
+	// TODO Implement structure
 }

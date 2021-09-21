@@ -10,24 +10,7 @@ import (
 	"github.com/SKorolchuk/dpio-workspace/internal/pkg/infra/database"
 	"github.com/SKorolchuk/dpio-workspace/internal/pkg/infra/uuid"
 	"github.com/SKorolchuk/dpio-workspace/internal/pkg/infra/validation"
-
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 )
-
-// Store represents a point of access to Workspace, Asset and Stem entities.
-type Store struct {
-	logger     *zap.SugaredLogger
-	connection *sqlx.DB
-}
-
-// NewStore creates an instance of Store for access to Workspace, Asset and Stem entities.
-func NewStore(logger *zap.SugaredLogger, connection *sqlx.DB) Store {
-	return Store{
-		logger:     logger,
-		connection: connection,
-	}
-}
 
 // CreateWorkspace adds new Workspace entity to the database.
 // If creation is successful, the method returns Workspace entity.
@@ -56,9 +39,9 @@ func (str Store) CreateWorkspace(ctx context.Context, claims auth.Claims, ws New
 
 	const query = `
 	INSERT INTO WORKSPACE
-		(workspace_id, project_id, workspace_type_id, name, description, asset_amount_limit, x_max, y_max, z_max,
+		(workspace_id, project_id, stem_id, name, description, asset_amount_limit, x_max, y_max, z_max,
 			date_created, created_by_user_id, date_updated, updated_by_user_id)
-	VALUES (:workspace_id, :project_id, :workspace_type_id, :name, :description, :asset_amount_limit, :x_max, :y_max,
+	VALUES (:workspace_id, :project_id, :stem_id, :name, :description, :asset_amount_limit, :x_max, :y_max,
 				:z_max, :date_created, :created_by_user_id, :date_updated, :updated_by_user_id)`
 
 	if err := database.NamedExecContext(ctx, str.logger, str.connection, query, wsData); err != nil {
@@ -170,7 +153,8 @@ func (str Store) DeleteWorkspace(ctx context.Context, claims auth.Claims, wsId s
 	return nil
 }
 
-// QueryWorkspaces looking for all Workspace entities.
+// QueryWorkspaces looking for all Workspace entities using skip/top mechanics with descending order by update date
+// field.
 func (str Store) QueryWorkspaces(ctx context.Context, skip int32, top int32) ([]Workspace, error) {
 	queryParams := struct {
 		Skip int32 `db:"offset"`
@@ -184,7 +168,7 @@ func (str Store) QueryWorkspaces(ctx context.Context, skip int32, top int32) ([]
 	SELECT
 		w.workspace_id,
 		w.project_id,
-		w.workspace_type_id,
+		w.stem_id,
 		w.name,
 		w.description,
 		w.asset_amount_limit,
@@ -197,6 +181,7 @@ func (str Store) QueryWorkspaces(ctx context.Context, skip int32, top int32) ([]
 		w.updated_by_user_id
 	FROM
 		WORKSPACE AS w
+	ORDER BY w.date_updated DESC
 	OFFSET :offset ROWS FETCH NEXT :top ROWS ONLY`
 
 	var wsCollection []Workspace
@@ -227,7 +212,7 @@ func (str Store) QueryWorkspaceByID(ctx context.Context, wsId string) (Workspace
 	SELECT
 		w.workspace_id,
 		w.project_id,
-		w.workspace_type_id,
+		w.stem_id,
 		w.name,
 		w.description,
 		w.asset_amount_limit,
@@ -255,4 +240,59 @@ func (str Store) QueryWorkspaceByID(ctx context.Context, wsId string) (Workspace
 	return wsData, nil
 }
 
-// TODO add Stem and Asset store operations
+// QueryWorkspacesByProjectAndStem looking for all Workspace entities that belong to a specific Project and have a
+// specific Stem with descending order by update date field.
+// If stemId argument equals to nil. No Stem filter will be applied.
+func (str Store) QueryWorkspacesByProjectAndStem(ctx context.Context, projectId string, stemId *string) ([]Workspace,
+	error) {
+	queryParams := struct {
+		ProjectId string `db:"project_id"`
+		StemId    string `db:"stem_id"`
+	}{
+		ProjectId: projectId,
+		StemId:    "",
+	}
+
+	if err := uuid.Validate(projectId); err != nil {
+		return []Workspace{}, err
+	}
+	if stemId != nil {
+		if err := uuid.Validate(*stemId); err != nil {
+			return []Workspace{}, err
+		}
+
+		queryParams.StemId = *stemId
+	}
+
+	const query = `
+	SELECT
+		w.workspace_id,
+		w.project_id,
+		w.stem_id,
+		w.name,
+		w.description,
+		w.asset_amount_limit,
+		w.x_max,
+		w.y_max,
+		w.z_max,
+		w.date_created,
+		w.created_by_user_id,
+		w.date_updated,
+		w.updated_by_user_id
+	FROM
+		WORKSPACE AS w
+	WHERE
+		w.project_id = :project_id AND (:stem_id = "" OR w.stem_id = :stem_id)
+	ORDER BY w.date_updated DESC`
+
+	var wsCollection []Workspace
+	if err := database.NamedQuerySlice(ctx, str.logger, str.connection, query, queryParams, &wsCollection); err != nil {
+		if err == database.ErrorNotFound {
+			return nil, database.ErrorNotFound
+		}
+
+		return nil, fmt.Errorf("error during search of Workspace entities: %w", err)
+	}
+
+	return wsCollection, nil
+}

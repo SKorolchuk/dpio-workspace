@@ -79,19 +79,19 @@ CREATE TABLE PROJECT_GROUP_ACCESS
     FOREIGN KEY (group_id) REFERENCES "GROUP" (group_id)
 );
 
-CREATE TABLE WORKSPACE_TYPE
+CREATE TABLE STEM
 (
-    workspace_type_id UUID,
-    name              varchar(255) UNIQUE,
+    stem_id UUID,
+    name    varchar(255) UNIQUE,
 
-    PRIMARY KEY (workspace_type_id)
+    PRIMARY KEY (stem_id)
 );
 
 CREATE TABLE WORKSPACE
 (
     workspace_id       UUID,
     project_id         UUID,
-    workspace_type_id  UUID,
+    stem_id            UUID,
     name               varchar(255) UNIQUE,
     description        varchar(500),
     asset_amount_limit numeric,
@@ -105,7 +105,7 @@ CREATE TABLE WORKSPACE
 
     PRIMARY KEY (workspace_id),
     FOREIGN KEY (project_id) REFERENCES PROJECT (project_id),
-    FOREIGN KEY (workspace_type_id) REFERENCES WORKSPACE_TYPE (workspace_type_id)
+    FOREIGN KEY (stem_id) REFERENCES STEM (stem_id)
 );
 
 CREATE TABLE ASSET
@@ -116,7 +116,15 @@ CREATE TABLE ASSET
     position_x            numeric,
     position_y            numeric,
     position_z            numeric,
-    position_w            numeric
-        PRIMARY KEY (asset_id),
+    scale                 numeric,
+    height_by_y           numeric,
+    width_by_x            numeric,
+    length_by_z           numeric,
+    date_created          timestamp,
+    created_by_user_id    UUID,
+    date_updated          timestamp,
+    updated_by_user_id    UUID,
+
+    PRIMARY KEY (asset_id),
     FOREIGN KEY (workspace_id) REFERENCES WORKSPACE (workspace_id)
 );
