@@ -1,10 +1,11 @@
-INSERT INTO PROJECT_TYPE (project_type_id, name)
+INSERT INTO PROJECT_COLLABORATION_TYPE (project_collaboration_type_id, name)
 VALUES ('f4a284cd-5a65-4468-8800-e0d8762933a9', 'Public'),
        ('0894f08f-1f45-4662-84bb-ac1d4f70b95d', 'Team'),
        ('b84bd65c-4fd5-4b67-abd1-b342fd67ee17', 'Private')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO PROJECT (project_id, project_type_id, name, description, date_created, created_by_user_id, date_updated,
+INSERT INTO PROJECT (project_id, project_collaboration_type_id, name, description, date_created, created_by_user_id,
+                     date_updated,
                      updated_by_user_id)
 VALUES ('5b3ea10c-f6c6-4931-bbfc-ec20b190cca4', 'f4a284cd-5a65-4468-8800-e0d8762933a9', 'Test Project',
         'This project generated from migration seed preset.',
@@ -12,13 +13,13 @@ VALUES ('5b3ea10c-f6c6-4931-bbfc-ec20b190cca4', 'f4a284cd-5a65-4468-8800-e0d8762
         '2021-01-01 00:00:01.000001+00', '92eded9e-979c-4e94-afc5-2333fcc920f6')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO ROLE (role_id, name)
+INSERT INTO PROJECT_ROLE (project_role_id, name)
 VALUES ('915c4e7e-a7fa-459d-9931-79de4b01621c', 'ProjectWorkspaceListRead'),
        ('5152caca-b43d-4b0b-8309-ac40a894eefc', 'ProjectReadAll'),
        ('16ab20b6-2016-4923-b14e-743b516efcf7', 'ProjectReadWriteAll')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO GROUP (group_id, name, date_created, created_by_user_id, date_updated, updated_by_user_id)
+INSERT INTO PROJECT_GROUP (project_group_id, name, date_created, created_by_user_id, date_updated, updated_by_user_id)
 VALUES ('f253b618-83c6-407b-af85-a1994e1e818c', 'Test Developer Group',
         '2021-01-01 00:00:01.000001+00', '92eded9e-979c-4e94-afc5-2333fcc920f6',
         '2021-01-01 00:00:01.000001+00', '92eded9e-979c-4e94-afc5-2333fcc920f6'),
@@ -27,7 +28,8 @@ VALUES ('f253b618-83c6-407b-af85-a1994e1e818c', 'Test Developer Group',
         '2021-01-01 00:00:01.000001+00', '92eded9e-979c-4e94-afc5-2333fcc920f6')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO GROUP_ROLE (group_role_id, group_id, role_id, date_created, created_by_user_id)
+INSERT INTO PROJECT_GROUP_ROLE (project_group_role_id, project_group_id, project_role_id, date_created,
+                                created_by_user_id)
 VALUES ('87c666e1-4141-4ca3-9632-2a8f934277c3', 'f253b618-83c6-407b-af85-a1994e1e818c',
         '16ab20b6-2016-4923-b14e-743b516efcf7', '2021-01-01 00:00:01.000001+00',
         '92eded9e-979c-4e94-afc5-2333fcc920f6'),
@@ -35,12 +37,13 @@ VALUES ('87c666e1-4141-4ca3-9632-2a8f934277c3', 'f253b618-83c6-407b-af85-a1994e1
         '5152caca-b43d-4b0b-8309-ac40a894eefc', '2021-01-01 00:00:01.000001+00', '92eded9e-979c-4e94-afc5-2333fcc920f6')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO GROUP_USER (group_user_id, group_id, user_id, date_created, created_by_user_id)
+INSERT INTO PROJECT_GROUP_USER (project_group_user_id, project_group_id, user_id, date_created, created_by_user_id)
 VALUES ('246f0914-7394-4341-96cd-0d27a66b1c37', 'f253b618-83c6-407b-af85-a1994e1e818c',
         '92eded9e-979c-4e94-afc5-2333fcc920f6', '2021-01-01 00:00:01.000001+00', '92eded9e-979c-4e94-afc5-2333fcc920f6')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO PROJECT_GROUP_ACCESS (project_group_access_id, project_id, group_id, date_created, created_by_user_id)
+INSERT INTO PROJECT_GROUP_ACCESS (project_group_access_id, project_id, project_group_id, date_created,
+                                  created_by_user_id)
 VALUES ('949d2cd8-f0e1-4563-a29d-fbc3241b8d5c', '5b3ea10c-f6c6-4931-bbfc-ec20b190cca4',
         'f253b618-83c6-407b-af85-a1994e1e818c', '2021-01-01 00:00:01.000001+00',
         '92eded9e-979c-4e94-afc5-2333fcc920f6'),

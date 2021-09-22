@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -70,11 +69,61 @@ func (str Store) UpdateAsset(ctx context.Context, claims auth.Claims, assetId st
 		return fmt.Errorf("error during search of Asset entity -> id={%q}: %w", assetId, err)
 	}
 
+	// TODO implement group-based edit check in downstream logic
 	if assetData.CreatedByUser != claims.Subject {
 		return database.ErrorForbidden
 	}
 
-	return errors.New("TODO IMPLEMENT RECEIVER")
+	if asset.AssetRefID != nil {
+		assetData.AssetRefID = *asset.AssetRefID
+	}
+	if asset.X != nil {
+		assetData.X = *asset.X
+	}
+	if asset.Y != nil {
+		assetData.Y = *asset.Y
+	}
+	if asset.Z != nil {
+		assetData.Z = *asset.Z
+	}
+	if asset.Scale != nil {
+		assetData.Scale = *asset.Scale
+	}
+	if asset.Height != nil {
+		assetData.Height = *asset.Height
+	}
+	if asset.Width != nil {
+		assetData.Width = *asset.Width
+	}
+	if asset.Length != nil {
+		assetData.Length = *asset.Length
+	}
+
+	assetData.DateUpdated = now
+	assetData.UpdatedByUser = claims.Subject
+
+	const query = `
+	UPDATE
+		ASSET
+	SET
+		"asset_external_ref_id" = :asset_external_ref_id,
+		"position_x" = :position_x,
+		"position_y" = :position_y,
+		"position_z" = :position_z,
+		"scale" = :scale,
+		"height_by_y" = :height_by_y,
+		"width_by_x" = :width_by_x,
+		"length_by_z" = :length_by_z,
+		"date_updated" = :date_updated,
+		"updated_by_user_id" = :updated_by_user_id
+	WHERE
+		asset_id = :asset_id`
+
+	if err := database.NamedExecContext(ctx, str.logger, str.connection, query, assetData); err != nil {
+		return fmt.Errorf("error during update of Asset entity -> id={%s}: %w", assetId, err)
+	}
+
+	return nil
 }
 
 // DeleteAsset removes existing Asset entity in the database.
@@ -112,9 +161,9 @@ func (str Store) DeleteAsset(ctx context.Context, claims auth.Claims, assetId st
 	return nil
 }
 
-// QueryWorkspaceAssets looking for all Asset entities that belong to a specific Workspace using skip/top mechanics with
+// QueryAssetsByWorkspace looking for all Asset entities that belong to a specific Workspace using skip/top mechanics with
 // descending order by update date field.
-func (str Store) QueryWorkspaceAssets(ctx context.Context, workspaceId string, skip int32, top int32) ([]Asset,
+func (str Store) QueryAssetsByWorkspace(ctx context.Context, workspaceId string, skip int32, top int32) ([]Asset,
 	error) {
 	if err := uuid.Validate(workspaceId); err != nil {
 		return []Asset{}, database.ErrorInvalidIdentifier

@@ -1,82 +1,82 @@
-CREATE TABLE PROJECT_TYPE
+CREATE TABLE PROJECT_COLLABORATION_TYPE
 (
-    project_type_id UUID,
-    name            varchar(255) UNIQUE,
+    project_collaboration_type_id UUID,
+    name                          varchar(255) UNIQUE,
 
-    PRIMARY KEY (project_type_id)
+    PRIMARY KEY (project_collaboration_type_id)
 );
 
 CREATE TABLE PROJECT
 (
-    project_id         UUID,
-    project_type_id    UUID,
-    name               varchar(255) UNIQUE,
-    description        varchar(500),
-    date_created       timestamp,
-    created_by_user_id UUID,
-    date_updated       timestamp,
-    updated_by_user_id UUID,
+    project_id                    UUID,
+    project_collaboration_type_id UUID,
+    name                          varchar(255) UNIQUE,
+    description                   varchar(500),
+    date_created                  timestamp,
+    created_by_user_id            UUID,
+    date_updated                  timestamp,
+    updated_by_user_id            UUID,
 
     PRIMARY KEY (project_id),
-    FOREIGN KEY (project_type_id) REFERENCES PROJECT_TYPE (project_type_id)
+    FOREIGN KEY (project_collaboration_type_id) REFERENCES PROJECT_COLLABORATION_TYPE (project_collaboration_type_id)
 );
 
-CREATE TABLE ROLE
+CREATE TABLE PROJECT_ROLE
 (
-    role_id UUID,
-    name    varchar(255) UNIQUE,
+    project_role_id UUID,
+    name            varchar(255) UNIQUE,
 
-    PRIMARY KEY (role_id)
+    PRIMARY KEY (project_role_id)
 );
 
-CREATE TABLE "GROUP"
+CREATE TABLE PROJECT_GROUP
 (
-    group_id           UUID,
+    project_group_id   UUID,
     name               varchar(255) UNIQUE,
     date_created       timestamp,
     created_by_user_id UUID,
     date_updated       timestamp,
     updated_by_user_id UUID,
 
-    PRIMARY KEY (group_id)
+    PRIMARY KEY (project_group_id)
 );
 
-CREATE TABLE GROUP_ROLE
+CREATE TABLE PROJECT_GROUP_ROLE
 (
-    group_role_id      UUID,
-    group_id           UUID,
-    role_id            UUID,
-    date_created       timestamp,
-    created_by_user_id UUID,
+    project_group_role_id UUID,
+    project_group_id      UUID,
+    project_role_id       UUID,
+    date_created          timestamp,
+    created_by_user_id    UUID,
 
-    PRIMARY KEY (group_role_id),
-    FOREIGN KEY (group_id) REFERENCES "GROUP" (group_id),
-    FOREIGN KEY (role_id) REFERENCES ROLE (role_id)
+    PRIMARY KEY (project_group_role_id),
+    FOREIGN KEY (project_group_id) REFERENCES PROJECT_GROUP (project_group_id),
+    FOREIGN KEY (project_role_id) REFERENCES PROJECT_ROLE (project_role_id)
 );
 
-CREATE TABLE GROUP_USER
+CREATE TABLE PROJECT_GROUP_USER
 (
-    group_user_id      UUID,
-    group_id           UUID,
-    user_id            UUID,
-    date_created       timestamp,
-    created_by_user_id UUID,
+    project_group_user_id UUID,
+    project_group_id      UUID,
+    user_id               UUID,
+    date_created          timestamp,
+    created_by_user_id    UUID,
 
-    PRIMARY KEY (group_user_id),
-    FOREIGN KEY (group_id) REFERENCES "GROUP" (group_id)
+    PRIMARY KEY (project_group_user_id),
+    FOREIGN KEY (project_group_id) REFERENCES PROJECT_GROUP (project_group_id)
 );
 
 CREATE TABLE PROJECT_GROUP_ACCESS
 (
     project_group_access_id UUID,
     project_id              UUID,
-    group_id                UUID,
+    project_group_id        UUID,
     date_created            timestamp,
     created_by_user_id      UUID,
 
     PRIMARY KEY (project_group_access_id),
     FOREIGN KEY (project_id) REFERENCES PROJECT (project_id),
-    FOREIGN KEY (group_id) REFERENCES "GROUP" (group_id)
+    FOREIGN KEY (project_group_id) REFERENCES PROJECT_GROUP (project_group_id)
 );
 
 CREATE TABLE STEM

@@ -68,6 +68,7 @@ func (str Store) UpdateWorkspace(ctx context.Context, claims auth.Claims, wsId s
 		return fmt.Errorf("error during search of Workspace entity -> id={%q}: %w", wsId, err)
 	}
 
+	// TODO implement group-based edit check in downstream logic
 	if wsData.CreatedByUser != claims.Subject {
 		return database.ErrorForbidden
 	}
@@ -139,6 +140,8 @@ func (str Store) DeleteWorkspace(ctx context.Context, claims auth.Claims, wsId s
 	}{
 		WorkspaceID: wsId,
 	}
+
+	// TODO Implement cascade delete of Assets and return list of marked Asset External Refs
 
 	const query = `
 	DELETE FROM

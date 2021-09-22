@@ -86,5 +86,12 @@ type NewAsset struct {
 
 // UpdateAsset describes all data that can be changed during update of existing Asset entity.
 type UpdateAsset struct {
-	// TODO Implement structure
+	AssetRefID *string `json:"assetRefId" validate:"required"`
+	X          *int32  `json:"x" validate:"required,gte=0"`
+	Y          *int32  `json:"y" validate:"required,gte=0"`
+	Z          *int32  `json:"z" validate:"required,gte=0"`
+	Scale      *int32  `json:"scale" validate:"required,gte=0"`
+	Height     *int32  `json:"height" validate:"required,gte=0"`
+	Width      *int32  `json:"width" validate:"required,gte=0"`
+	Length     *int32  `json:"length" validate:"required,gte=0"`
 }
