@@ -72,5 +72,6 @@ type NewProject struct {
 
 // UpdateProject describes all data that can be changed during update of existing Project entity.
 type UpdateProject struct {
-	// TODO Implement structure
+	Name          *string `json:"name" validate:"required"`
+	Description   *string `json:"description" validate:"required"`
 }
