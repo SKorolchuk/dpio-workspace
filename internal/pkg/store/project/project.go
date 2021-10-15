@@ -51,13 +51,88 @@ func (str Store) CreateProject(ctx context.Context, claims auth.Claims, project 
 // If error occurs, the method can return validation or database errors.
 func (str Store) UpdateProject(ctx context.Context, claims auth.Claims, projectId string, project UpdateProject,
 	now time.Time) error {
-	return errors.New("TODO Implement method")
+	if err := uuid.Validate(projectId); err != nil {
+		return database.ErrorInvalidIdentifier
+	}
+
+	if err := validation.Check(ctx, project); err != nil {
+		return fmt.Errorf("error during data validation of Project entity: %w", err)
+	}
+
+	projectData, err := str.QueryProjectByID(ctx, projectId)
+	if err != nil {
+		return fmt.Errorf("error during search of Project entity -> id={%q}: %w", projectId, err)
+	}
+
+	// TODO implement group-based edit check in downstream logic
+	if projectData.CreatedByUser != claims.Subject {
+		return database.ErrorForbidden
+	}
+
+	if project.Name != nil {
+		projectData.Name = *project.Name
+	}
+
+	if project.Description != nil {
+		projectData.Description = *project.Description
+	}
+
+	projectData.DateUpdated = now
+	projectData.UpdatedByUser = claims.Subject
+
+	const query = `
+	UPDATE
+		PROJECT
+	SET
+		"name" = :name,
+		"description" = :description,
+		"date_updated" = :date_updated,
+		"updated_by_user_id" = :updated_by_user_id
+	WHERE
+		project_id = :project_id`
+
+	if err := database.NamedExecContext(ctx, str.logger, str.connection, query, projectData); err != nil {
+		return fmt.Errorf("error during update of Project entity -> id={%s}: %w", projectId, err)
+	}
+
+	return nil
 }
 
 // DeleteProject removes existing Project entity in the database.
 // If error occurs, the method can return database errors.
 func (str Store) DeleteProject(ctx context.Context, claims auth.Claims, projectId string) error {
-	return errors.New("TODO Implement method")
+	if err := uuid.Validate(wsId); err != nil {
+		return database.ErrorInvalidIdentifier
+	}
+
+	wsData, err := str.QueryWorkspaceByID(ctx, wsId)
+	if err != nil {
+		return fmt.Errorf("error during search of Workspace entity -> id={%q}: %w", wsId, err)
+	}
+
+	if wsData.CreatedByUser != claims.Subject {
+		return database.ErrorForbidden
+	}
+
+	queryParams := struct {
+		WorkspaceID string `db:"workspace_id"`
+	}{
+		WorkspaceID: wsId,
+	}
+
+	// TODO Implement cascade delete of Assets and return list of marked Asset External Refs
+
+	const query = `
+	DELETE FROM
+		WORKSPACE
+	WHERE
+		workspace_id = :workspace_id`
+
+	if err := database.NamedExecContext(ctx, str.logger, str.connection, query, queryParams); err != nil {
+		return fmt.Errorf("error during delete of Workspace entity -> id={%q}: %w", wsId, err)
+	}
+
+	return nil
 }
 
 // QueryProjects looking for all Project entities using skip/top mechanics with descending order by update date field.
